@@ -15,7 +15,7 @@ const normalizePort = val => {
 };
 
 // Récupération du port à utiliser
-const port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || '4000');
 app.set('port', port);
 
 // Fonction pour gérer les erreurs

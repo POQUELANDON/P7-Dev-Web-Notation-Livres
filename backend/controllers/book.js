@@ -99,38 +99,49 @@ exports.getOneBook = (req, res, next) => {
         .then(book => res.status(200).json(book))
         .catch(error => res.status(404).json({ error }));
 };
+exports.rateBook = (req, res, next) => {
+    const userId = req.body.userId;
+    const grade = req.body.grade;
+    console.log(userId, grade);
+    // Vérifier si userId et grade sont fournis
+    if (!userId || !grade) {
+        return res.status(400).json({ error: 'userId et grade sont requis.' });
+    }
+
+    // Vérifiez si la note est comprise entre 0 et 5
+    if (grade < 0 || grade > 5) {
+        return res.status(400).json({ error: 'La note doit être comprise entre 0 et 5.' });
+    }
+
+    Book.findOne({ _id: req.params.id })
+        .then(book => {
+            // Vérifiez si l'utilisateur a déjà noté le livre
+            const userGrade = book.ratings.find(r => r.userId === userId);
+            if (userGrade) {
+                return res.status(400).json({ error: 'Un utilisateur ne peut pas noter deux fois le même livre.' });
+            }
+
+            // Ajoutez la nouvelle note
+            book.ratings.push({ userId, grade });
+
+            // Mettez à jour la note moyenne
+            const totalGrade = book.ratings.reduce((total, r) => total + r.grade, 0);
+            book.averageRating = book.ratings.length > 0 ? totalGrade / book.ratings.length : 0;
+
+            // Sauvegardez le livre mis à jour
+            book.save()
+                .then(book => res.status(200).json(book))
+                .catch(error => res.status(400).json({ error }));
+        })
+        .catch(error => res.status(400).json({ error }));
+};
+
 exports.getBestRatingBook = (req, res, next) => {
     Book.find().sort({ averageRating: -1 }).limit(3)
         .then(books => res.status(200).json(books))
         .catch(error => res.status(400).json({ error }));
 };
-exports.rateBook = (req, res, next) => {
-    const userId = req.body.userId;
-    const rating = req.body.rating;
-
-    // Vérifiez si la note est comprise entre 0 et 5
-    if (rating < 0 || rating > 5) {
-        return res.status(400).json({ error: 'La note doit être comprise entre 0 et 5.' });
-    }
-    Book.findOne({ _id: req.params.id })
-        .then(book => {
-            // Vérifiez si l'utilisateur a déjà noté le livre
-            const userRating = book.ratings.find(r => r.userId === userId);
-            if (userRating) {
-                return res.status(400).json({ error: 'Un utilisateur ne peut pas noter deux fois le même livre.' });
-            }
-            // Ajoutez la nouvelle note
-            book.ratings.push({ userId, rating });
-            // Mettez à jour la note moyenne
-            const totalRating = book.ratings.reduce((total, r) => total + r.rating, 0);
-            book.averageRating = totalRating / book.ratings.length;
-            // Sauvegardez le livre mis à jour
-            return book.save();
-        })
-        .then(() => res.status(200).json({ message: 'Note ajoutée avec succès !' }))
-        .catch(error => res.status(400).json({ error }));
-};
-exports.getAllBook = (req, res) => {
+exports.getAllBook = (req, res, next) => {
     Book.find()
         .then(books => res.status(200).json(books))
         .catch(error => res.status(400).json({ error }));

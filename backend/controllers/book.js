@@ -9,15 +9,23 @@ exports.createBook = (req, res, next) => {
     const book = new Book({
         ...bookObject,
         userId: req.auth.userId,
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}.webp`
     });
     sharp(req.file.path)
         .resize(500)
-        .toFile(`images/${req.file.filename}`, (err) => {
+        .webp({ quality: 50 })
+        .toFile(`images/${req.file.filename}.webp`, (err) => {
             if (err) {
                 console.log(err);
             } else {
-                console.log('Image resized successfully');
+                console.log('Image resized and converted to webp successfully');
+                fs.unlink(req.file.path, err => {
+                    if (err) {
+                        console.error(err);
+                    } else {
+                        console.log('Original image deleted successfully');
+                    }
+                });
             }
         });
     book.save()
@@ -27,7 +35,7 @@ exports.createBook = (req, res, next) => {
 exports.modifyBook = (req, res, next) => {
     const bookObject = req.file ? {
         ...JSON.parse(req.body.book),
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}.webp`
     } : { ...req.body };
     delete bookObject._userId;
     Book.findOne({ _id: req.params.id })
@@ -43,11 +51,19 @@ exports.modifyBook = (req, res, next) => {
                     });
                     sharp(req.file.path)
                         .resize(500)
-                        .toFile(`images/${req.file.filename}`, (err) => {
+                        .webp({ quality: 50 })
+                        .toFile(`images/${req.file.filename}.webp`, (err) => {
                             if (err) {
                                 console.log(err);
                             } else {
-                                console.log('Image resized successfully');
+                                console.log('Image resized and converted to webp successfully');
+                                fs.unlink(req.file.path, err => {
+                                    if (err) {
+                                        console.error(err);
+                                    } else {
+                                        console.log('Original image deleted successfully');
+                                    }
+                                });
                             }
                         });
                 }
@@ -114,7 +130,7 @@ exports.rateBook = (req, res, next) => {
         .then(() => res.status(200).json({ message: 'Note ajoutée avec succès !' }))
         .catch(error => res.status(400).json({ error }));
 };
-exports.getAllBook = (req, res, next) => {
+exports.getAllBook = (req, res) => {
     Book.find()
         .then(books => res.status(200).json(books))
         .catch(error => res.status(400).json({ error }));

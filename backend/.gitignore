@@ -1,3 +1,4 @@
+images
 node_modules
 # Fichier .env avec les variables d'environnement
 .env

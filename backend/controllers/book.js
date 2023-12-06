@@ -3,12 +3,18 @@ const fs = require('fs'); // Importation du module fs de Node.js pour interagir 
 const sharp = require('sharp'); // Importation du package sharp pour manipuler les images
 // Validation des entrées d'un livre
 function validateInput(input, type) {
+    // Expression régulière pour valider les entrées sans caractères spéciaux
+    const regex = /^[a-zA-Z0-9\séèàùâêîôûëïöüçÉÈÀÙÂÊÎÔÛËÏÖÜÇ&]*$/;
     switch (type) {
         case 'title':
-        case 'author':
-        case 'genre':
             // Vérifie que l'entrée est une chaîne de caractères et ne contient pas de caractères spéciaux
-            return typeof input === 'string' && !/[^a-zA-Z0-9\séèàùâêîôûëïöüçÉÈÀÙÂÊÎÔÛËÏÖÜÇ&]/.test(input);
+            return typeof input === 'string' && regex.test(input) && input !== undefined;
+        case 'author':
+            return typeof input === 'string' && regex.test(input) && input !== undefined;
+        case 'genre':
+            return typeof input === 'string' && regex.test(input) && input !== undefined;
+        case 'imageUrl':
+            return typeof input !== undefined;
         case 'year':
             // Vérifie que l'entrée est une chaîne de caractères représentant une année valide
             const year = parseInt(input);
@@ -20,6 +26,14 @@ function validateInput(input, type) {
 exports.createBook = (req, res, next) => {
     // Contrôleur pour la création de livres
     const bookObject = JSON.parse(req.body.book); // Parse le corps de la requête en JSON
+    console.log(bookObject);
+    if (!validateInput(bookObject.title, 'title') ||
+        !validateInput(bookObject.author, 'author') ||
+        !validateInput(bookObject.year, 'year') ||
+        !validateInput(bookObject.genre, 'genre') ||
+        !validateInput(bookObject.imageUrl, 'imageUrl')) {
+        return;
+    }
     delete bookObject._id; // Supprime l'_id du corps de la requête
     delete bookObject._userId; // Supprime le _userId du corps de la requête
     const book = new Book({ // Crée un nouveau livre avec les données de la requête
@@ -48,12 +62,6 @@ exports.createBook = (req, res, next) => {
                 });
             }
         });
-    if (!validateInput(bookObject.title, 'title') ||
-        !validateInput(bookObject.author, 'author') ||
-        !validateInput(bookObject.year, 'year') ||
-        !validateInput(bookObject.genre, 'genre')) {
-        return res.status(400).json({ error: 'Données invalides.' });
-    }
     // Enregistre le livre dans la base de données
     book.save()
         .then(() => res.status(201).json({ message: 'Livre enregistré !' }))
@@ -69,8 +77,9 @@ exports.modifyBook = (req, res, next) => {
     if (!validateInput(bookObject.title, 'title') ||
         !validateInput(bookObject.author, 'author') ||
         !validateInput(bookObject.year, 'year') ||
-        !validateInput(bookObject.genre, 'genre')) {
-        return res.status(400).json({ error: 'Données invalides.' });
+        !validateInput(bookObject.genre, 'genre') ||
+        !validateInput(bookObject.imageUrl, 'imageUrl')) {
+        return;
     }
     delete bookObject._userId; // Supprime le _userId du corps de la requête
     Book.findOne({ _id: req.params.id }) // Trouve le livre avec l'_id fourni

@@ -3,14 +3,12 @@ const bookRoutes = require('./routes/book'); // Importation des routes pour les 
 const userRoutes = require('./routes/user'); // Importation des routes pour les utilisateurs
 const path = require('path'); // Importation du module path de Node.js pour gérer les chemins
 const helmet = require('helmet');
+// Utilise les variables d'environnement pour stocker les informations MongoDB
 require('dotenv').config(); // Appeler dotenv
 const mongoose = require('mongoose'); // Importation de Mongoose pour interagir avec MongoDB
-// Utilisez des variables d'environnement pour stocker les informations sensibles
-const mongoDBUser = process.env.MONGODB_USER;
-const mongoDBPass = process.env.MONGODB_PASS;
-const mongoDBClust = process.env.MONGODB_CLUSTER
+
 // Connexion à la base de données MongoDB
-mongoose.connect(`mongodb+srv://${mongoDBUser}:${mongoDBPass}@${mongoDBClust}/?retryWrites=true&w=majority`,
+mongoose.connect(process.env.MONGODB_URI,
     {
         useNewUrlParser: true,
         useUnifiedTopology: true,

@@ -152,10 +152,10 @@ exports.getOneBook = (req, res, next) => {
 // Contrôleur pour noter un livre
 exports.rateBook = (req, res, next) => {
     const userId = req.body.userId; // Récupère l'ID utilisateur de la requête
-    const grade = req.body.grade; // Récupère la note de la requête
+    const grade = parseInt(req.body.grade); // Assure que la note est un entier
     // Vérifie si l'ID utilisateur et la note sont fournis et si la note est comprise entre 0 et 5
     if (!userId || !grade || grade < 0 || grade > 5) {
-        return res.status(400).json({ error: 'userId et grade sont requis et la note doit être comprise entre 0 et 5.' });
+        return res.status(400).json({ error: 'La note doit être comprise entre 0 et 5.' });
     }
     Book.findOne({ _id: req.params.id }) // Trouve le livre avec l'_id fourni
         .then(book => {

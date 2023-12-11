@@ -1,6 +1,6 @@
 const rateLimit = require('express-rate-limit');
 
-// Créez une instance de rate limiter pour les routes d'inscription et de connexion
+// Configuration de rate limiter pour les routes d'inscription et de connexion
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // Fenêtre de temps de 15 minutes
     max: 5, // Limite chaque IP à 5 requêtes par fenêtre de temps

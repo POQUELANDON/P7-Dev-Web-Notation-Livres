@@ -1,39 +1,10 @@
 const Book = require('../models/book'); // Importation du modèle de livre
 const fs = require('fs'); // Importation du module fs de Node.js pour interagir avec le système de fichiers
 const sharp = require('sharp'); // Importation du package sharp pour manipuler les images
-// Validation des entrées d'un livre
-function validateInput(input, type) {
-    // Expression régulière pour valider les entrées sans caractères spéciaux
-    const regex = /^[a-zA-Z0-9\séèàùâêîôûëïöüçÉÈÀÙÂÊÎÔÛËÏÖÜÇ&]*$/;
-    switch (type) {
-        case 'title':
-            // Vérifie que l'entrée est une chaîne de caractères et ne contient pas de caractères spéciaux
-            return typeof input === 'string' && regex.test(input) && input !== undefined;
-        case 'author':
-            return typeof input === 'string' && regex.test(input) && input !== undefined;
-        case 'genre':
-            return typeof input === 'string' && regex.test(input) && input !== undefined;
-        case 'imageUrl':
-            return typeof input !== undefined;
-        case 'year':
-            // Vérifie que l'entrée est une chaîne de caractères représentant une année valide
-            const year = parseInt(input);
-            return !isNaN(year) && year > 0 && year <= new Date().getFullYear();
-        default:
-            return false;
-    }
-}
+
 exports.createBook = (req, res, next) => {
     // Contrôleur pour la création de livres
     const bookObject = JSON.parse(req.body.book); // Parse le corps de la requête en JSON
-    console.log(bookObject);
-    if (!validateInput(bookObject.title, 'title') ||
-        !validateInput(bookObject.author, 'author') ||
-        !validateInput(bookObject.year, 'year') ||
-        !validateInput(bookObject.genre, 'genre') ||
-        !validateInput(bookObject.imageUrl, 'imageUrl')) {
-        return;
-    }
     delete bookObject._id; // Supprime l'_id du corps de la requête
     delete bookObject._userId; // Supprime le _userId du corps de la requête
     const book = new Book({ // Crée un nouveau livre avec les données de la requête
@@ -74,14 +45,11 @@ exports.modifyBook = (req, res, next) => {
         ...JSON.parse(req.body.book),
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}.webp`
     } : { ...req.body }; // Sinon, utilise le corps de la requête tel quel
-    if (!validateInput(bookObject.title, 'title') ||
-        !validateInput(bookObject.author, 'author') ||
-        !validateInput(bookObject.year, 'year') ||
-        !validateInput(bookObject.genre, 'genre') ||
-        !validateInput(bookObject.imageUrl, 'imageUrl')) {
-        return;
-    }
     delete bookObject._userId; // Supprime le _userId du corps de la requête
+    // Vérifiez si tous les champs nécessaires sont présents
+    if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre) {
+        return res.status(400).json({ message: 'Tous les champs sont requis' });
+    }
     Book.findOne({ _id: req.params.id }) // Trouve le livre avec l'_id fourni
         .then((book) => {
             if (book.userId != req.auth.userId) { // Si l'ID utilisateur du livre ne correspond pas à l'ID utilisateur de la requête
